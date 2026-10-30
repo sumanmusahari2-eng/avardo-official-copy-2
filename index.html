@@ -1288,7 +1288,7 @@
                   </div>
                   <div class="auth-field">
                     <label for="loginPass">Password</label>
-                    <input id="loginPass" type="password" autocomplete="current-password" placeholder="Your password" />
+                    <span style="position:relative;display:block"><input id="loginPass" type="password" autocomplete="current-password" placeholder="Your password" style="padding-right:42px" /><button type="button" aria-label="Show password" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:16px;line-height:1;padding:4px" onclick="var i=this.previousElementSibling;i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';this.setAttribute('aria-label',i.type==='password'?'Show password':'Hide password');">👁</button></span>
                   </div>
                   <button class="auth-submit" id="loginSubmit" type="submit">Sign in</button>
                 </form>
@@ -1303,7 +1303,7 @@
                   </div>
                   <div class="auth-field">
                     <label for="regPass">Password</label>
-                    <input id="regPass" type="password" autocomplete="new-password" placeholder="At least 8 characters" />
+                    <span style="position:relative;display:block"><input id="regPass" type="password" autocomplete="new-password" placeholder="At least 8 characters" style="padding-right:42px" /><button type="button" aria-label="Show password" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:16px;line-height:1;padding:4px" onclick="var i=this.previousElementSibling;i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';this.setAttribute('aria-label',i.type==='password'?'Show password':'Hide password');">👁</button></span>
                   </div>
                   <button class="auth-submit" id="regSubmit" type="submit">Create account</button>
                 </form>
