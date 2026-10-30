@@ -1884,6 +1884,10 @@
                 <option value="cyber">Cyber</option>
               </select>
             </div>
+            <div class="admin-field">
+              <label for="admSlideSecs">Banner slide timing (seconds)</label>
+              <input id="admSlideSecs" type="number" min="2" max="60" step="1" inputmode="numeric" placeholder="e.g. 5" />
+            </div>
             <div class="admin-field full">
               <label for="admNote">Support note (shown in the order summary)</label>
               <textarea id="admNote"></textarea>
@@ -2509,6 +2513,7 @@
         row.hidden = false;
       }
       var bannerSlideIdx = 0, bannerSlideCount = 0, bannerSlideTimer = null;
+      var BANNER_SLIDE_SECS = 4.5;
       function goBannerSlide(i) {
         var row = document.getElementById("bannerRow"); if (!row) return;
         var track = row.querySelector(".bslider-track"); if (!track || !bannerSlideCount) return;
@@ -2521,7 +2526,7 @@
       function startBannerAuto() {
         stopBannerAuto();
         if (bannerSlideCount > 1 && !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
-          bannerSlideTimer = setInterval(function () { if (!document.hidden) goBannerSlide(bannerSlideIdx + 1); }, 4500);
+          bannerSlideTimer = setInterval(function () { if (!document.hidden) goBannerSlide(bannerSlideIdx + 1); }, Math.round(BANNER_SLIDE_SECS * 1000));
         }
       }
       function bindBannerSlider(row) {
@@ -4003,6 +4008,7 @@
           games: GAMES,
           waNumber: WA_NUMBER,
           theme: THEMES[themeIdx].id,
+          bannerSlideSecs: BANNER_SLIDE_SECS,
           supportNote: SUPPORT_NOTE,
           banners: BANNERS,
           faqs: FAQS,
@@ -4035,6 +4041,7 @@
           var fn = document.getElementById("faqSupportNote");
           if (fn) fn.textContent = SUPPORT_NOTE;
         }
+        if (typeof d.bannerSlideSecs === "number" && isFinite(d.bannerSlideSecs)) BANNER_SLIDE_SECS = Math.min(60, Math.max(2, d.bannerSlideSecs));
         if (Array.isArray(d.banners)) { BANNERS = d.banners; renderBanners(); }
         if (Array.isArray(d.faqs)) { FAQS = d.faqs; renderFaqs(); }
         if (Array.isArray(d.highlights)) { HIGHLIGHTS = d.highlights; renderHighlights(); }
@@ -4084,6 +4091,7 @@
                 theme: s.theme || "",
                 supportNote: s.supportNote || "",
                 banners: Array.isArray(s.banners) ? s.banners : undefined,
+                bannerSlideSecs: (typeof s.bannerSlideSecs === "number" ? s.bannerSlideSecs : undefined),
                 faqs: Array.isArray(s.faqs) ? s.faqs : undefined,
                 highlights: Array.isArray(s.highlights) ? s.highlights : undefined,
                 logo: s.logo !== undefined ? s.logo : undefined,
@@ -4150,6 +4158,7 @@
       function renderAdminEditor() {
         document.getElementById("admWa").value = adminData.waNumber || "";
         document.getElementById("admTheme").value = adminData.theme || "violet";
+        document.getElementById("admSlideSecs").value = (typeof adminData.bannerSlideSecs === "number" ? adminData.bannerSlideSecs : 4.5);
         document.getElementById("admNote").value = adminData.supportNote || "";
         var _rt = document.getElementById("admResellerTitle");
         if (_rt) _rt.value = adminData.resellerTitle || "";
@@ -4244,6 +4253,7 @@
         if (t.id === "admWa") { adminData.waNumber = t.value; return; }
         if (t.id === "admNote") { adminData.supportNote = t.value; return; }
         if (t.id === "admTheme") { adminData.theme = t.value; return; }
+        if (t.id === "admSlideSecs") { var v = parseFloat(t.value); adminData.bannerSlideSecs = (isFinite(v) ? Math.min(60, Math.max(2, v)) : 4.5); return; }
         if (t.id === "admLogo") { adminData.logo = t.value; return; }
         if (t.id === "admFavicon") { adminData.favicon = t.value; return; }
         if (t.id === "admResellerTitle") { adminData.resellerTitle = t.value; return; }
@@ -4528,7 +4538,7 @@
          message naming that section, and no silent fallback is used.
          PREVIEW FIRST: the plan is computed and shown in a table, and
          nothing is written until Apply is tapped. Apply writes into
-         adminData and saves through saveAdminStore — the same
+         adminData and saves through saveAdminPartial — the same
          PUT /api/admin/store flow as every other admin save, so no new
          endpoint is needed. Packs with no Busan product linked, or
          whose product is missing from the catalogue, are listed as
@@ -4881,7 +4891,7 @@
         clearBulkPreview();
         bulkMsg("");
         renderAdminEditor();
-        saveAdminStore(e.applyBtn);
+        saveAdminPartial(e.applyBtn, gamesPatch());
       }
       (function initBulkPrices() {
         var e = bulkEls();
@@ -5022,8 +5032,7 @@
          adminData object, so a save always sends the full store —
          saving one section can never wipe the others, and unsaved edits
          made in another tab are kept. */
-      function saveAdminStore(btn) {
-        if (!adminData) return;
+      function gamesPatch() {
         /* Reseller-price rule: a pack saved without a reseller price
            gets its regular price AS the reseller price — never blank,
            never ₹0. Packs that already have one keep it untouched. */
@@ -5032,12 +5041,19 @@
             if (!packHasResellerPrice(p)) p.resellerPrice = Number(p.price || 0);
           });
         });
+        return { games: adminData.games };
+      }
+      function settingsPatch() {
+        return { waNumber: adminData.waNumber, theme: adminData.theme, supportNote: adminData.supportNote, resellerTitle: adminData.resellerTitle, resellerText: adminData.resellerText, logo: adminData.logo, favicon: adminData.favicon, moveBannerText: adminData.moveBannerText, bannerSlideSecs: adminData.bannerSlideSecs, categories: adminData.categories };
+      }
+      function saveAdminPartial(btn, patch) {
+        if (!adminData) return;
         btn.disabled = true;
         setAdminStatus("Saving…");
-        fetch(AUTH_API + "/api/admin/store", {
+        fetch(AUTH_API + "/api/admin/partial", {
           method: "PUT",
           headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() },
-          body: JSON.stringify(adminData)
+          body: JSON.stringify(patch)
         })
           .then(function (r) {
             return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, d: d }; });
@@ -5056,9 +5072,17 @@
             setAdminStatus("Could not reach the server. Check your connection and try again.", "err");
           });
       }
-      ["adminSaveSettings", "adminSaveBanners", "adminSaveFaqs", "adminSaveHighlights", "adminSaveGames", "adminSaveSeo"].forEach(function (id) {
+      var adminSavePatches = {
+        adminSaveSettings: settingsPatch,
+        adminSaveBanners: function () { return { banners: adminData.banners }; },
+        adminSaveFaqs: function () { return { faqs: adminData.faqs }; },
+        adminSaveHighlights: function () { return { highlights: adminData.highlights }; },
+        adminSaveGames: gamesPatch,
+        adminSaveSeo: function () { return { seo: adminData.seo }; }
+      };
+      Object.keys(adminSavePatches).forEach(function (id) {
         var b = document.getElementById(id);
-        if (b) b.addEventListener("click", function () { saveAdminStore(b); });
+        if (b) b.addEventListener("click", function () { saveAdminPartial(b, adminSavePatches[id]()); });
       });
       /* SEO tab copy / reset buttons (no-ops if the tab markup is absent). */
       (function initSeoButtons() {
