@@ -679,7 +679,15 @@
       #upiMobileField{margin-top:.8rem}
       .upi-pay-btn{margin:0 0 .55rem}
 
-            /* ============ INFO PAGES ============ */
+                  /* ============ RECENT IDS ============ */
+      .recent-wrap{margin:.6rem 0 .2rem}
+      .recent-label{font-size:.78rem; font-weight:700; letter-spacing:.02em; color:var(--muted); margin-bottom:.45rem}
+      .recent-list{display:flex; flex-wrap:wrap; gap:.5rem}
+      .recent-chip{display:inline-flex; align-items:center; gap:.5rem; padding:.45rem .7rem; border:1px solid var(--border-soft); border-radius:999px; background:var(--surface); color:inherit; font-size:.88rem; font-weight:700; cursor:pointer}
+      .recent-chip:hover{border-color:var(--accent)}
+      .recent-x{font-size:.7rem; opacity:.6; padding:.1rem .25rem}
+      .recent-x:hover{opacity:1}
+      /* ============ INFO PAGES ============ */
       .info-body{line-height:1.7; font-weight:500}
       .info-body h3{margin:1.2rem 0 .4rem; font-size:1.02rem}
       .info-body h3:first-child{margin-top:0}
@@ -1454,7 +1462,11 @@
           <div class="panel-body">
             <div class="panel-form">
               <div class="f-step">
-                <div class="f-title"><span class="n">1</span> Enter your game ID <span class="hint" id="idHint">Find it under your in-game avatar</span></div>
+                                <div class="f-title"><span class="n">1</span> Enter your game ID <span class="hint" id="idHint">Find it under your in-game avatar</span></div>
+                <div class="recent-wrap" id="recentWrap" hidden>
+                  <div class="recent-label">Recent for this game — tap to fill</div>
+                  <div class="recent-list" id="recentList"></div>
+                </div>
                 <div class="id-row">
                   <div class="field" id="uidField">
                     <label for="uidInput">User ID</label>
@@ -2716,6 +2728,7 @@
         if (typeof clearCheckMsg === "function") clearCheckMsg();
         renderPacks();
         updateSummary();
+        renderRecentIds();
         if (scroll) {
           document.getElementById("topup").scrollIntoView({ behavior: "smooth", block: "start" });
         }
@@ -2864,6 +2877,7 @@
           if (d.mapped === false) { setCheckMsg("ID check isn't set up for this pack yet.", "note"); return; }
           if (d.valid) {
             setCheckMsg(d.username ? "✓ ID found — nickname: " + d.username : "✓ This ID is valid.", "ok");
+            saveRecentId();
             return;
           }
           setCheckMsg(d.error || "That ID could not be verified. Double-check the User ID" + (state.game.needsZone ? " and Zone ID." : "."), "err");
@@ -2992,6 +3006,7 @@
         }
         var msg = orderText();
         function legacyFlow(extra) {
+          saveRecentId();
           if (WA_NUMBER) {
             orderDone.innerHTML = "<b>Order ready.</b> Opening WhatsApp with your order filled in — send it and support will confirm payment and deliver your pack. Order: <b>" +
               state.game.short + " · " + state.pack.amt + " · " + inr(packBuyPrice(state.pack)) + "</b> to ID <b>" + deliverTo() + "</b>." + (extra || "");
@@ -3054,6 +3069,7 @@
               orderDone.innerHTML = "<b>Could not place order:</b> The orders service did not return an order ID. Try again.";
               return;
             }
+            saveRecentId();
             orderBtn.innerHTML = "Opening UPI payment…";
             orderDone.innerHTML = "Order saved — opening the UPI payment page…";
             createUpiPayment(uOrderId, customerMobile).then(function (payRes) {
@@ -5452,6 +5468,67 @@
         var h = window.location.hash || "";
         if (h.indexOf("#info-") === 0 && INFO_KEYS.indexOf(h.slice(6)) >= 0) openInfoPage(h.slice(6));
       })();
+      
+      /* ---- Recent IDs: saved on this device, shown as tap-to-fill chips ---- */
+      var RECENT_KEY = "avardo_recent_ids_v1";
+      function loadRecentIds() {
+        try {
+          var raw = localStorage.getItem(RECENT_KEY);
+          var arr = raw ? JSON.parse(raw) : [];
+          return Array.isArray(arr) ? arr : [];
+        } catch (e) { return []; }
+      }
+      function saveRecentId() {
+        try {
+          var uid = uidInput.value.trim();
+          if (!uid || !state.game) return;
+          var zone = state.game.needsZone ? zoneInput.value.trim() : "";
+          var gid = state.game.id;
+          var list = loadRecentIds().filter(function (e) { return !(e.gid === gid && e.uid === uid && (e.zone || "") === zone); });
+          list.unshift({ gid: gid, gname: state.game.name, uid: uid, zone: zone, ts: Date.now() });
+          if (list.length > 5) list = list.slice(0, 5);
+          localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+        } catch (e) {}
+        renderRecentIds();
+      }
+      function removeRecentId(idx) {
+        try {
+          var list = loadRecentIds();
+          list.splice(idx, 1);
+          localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+        } catch (e) {}
+        renderRecentIds();
+      }
+      function renderRecentIds() {
+        var wrap = document.getElementById("recentWrap");
+        var listEl = document.getElementById("recentList");
+        if (!wrap || !listEl || !state.game) return;
+        var all = loadRecentIds();
+        var mine = [];
+        for (var i = 0; i < all.length; i++) { if (all[i].gid === state.game.id) mine.push({ e: all[i], idx: i }); }
+        if (!mine.length) { wrap.hidden = true; listEl.innerHTML = ""; return; }
+        wrap.hidden = false;
+        listEl.innerHTML = mine.map(function (m) {
+          var label = esc(m.e.uid) + (m.e.zone ? " (" + esc(m.e.zone) + ")" : "");
+          return '<button class="recent-chip" type="button" data-recent="' + m.idx + '"><span>' + label + '</span><span class="recent-x" data-recent-x="' + m.idx + '" title="Remove">✕</span></button>';
+        }).join("");
+        Array.prototype.forEach.call(listEl.querySelectorAll("[data-recent]"), function (btn) {
+          btn.addEventListener("click", function (ev) {
+            var t = ev.target;
+            var x = (t && t.getAttribute) ? t.getAttribute("data-recent-x") : null;
+            if (x !== null) { removeRecentId(parseInt(x, 10)); return; }
+            var idx = parseInt(btn.getAttribute("data-recent"), 10);
+            var e = loadRecentIds()[idx];
+            if (!e) return;
+            uidInput.value = e.uid;
+            if (zoneInput) zoneInput.value = e.zone || "";
+            uidField.classList.remove("invalid");
+            zoneField.classList.remove("invalid");
+            if (typeof clearCheckMsg === "function") clearCheckMsg();
+            updateSummary();
+          });
+        });
+      }
       /* ---- Admin tabs ---- */
       Array.prototype.forEach.call(document.querySelectorAll("[data-atab]"), function (btn) {
         btn.addEventListener("click", function(){
