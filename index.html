@@ -1589,6 +1589,7 @@
                 <li><a href="#top">Home</a></li>
                 <li><a href="#games">Games</a></li>
                 <li><a href="#info-about">About us</a></li>
+                <li><a href="#info-owner">About owner</a></li>
               </ul>
             </div>
             <div>
@@ -5478,7 +5479,7 @@
       document.getElementById("trackClose").addEventListener("click", function(){ document.getElementById("trackOverlay").hidden = true; if (document.getElementById("ordersOverlay").hidden) document.body.style.overflow = ""; });
 
       
-      /* ---- Info pages (footer: Support / Track / Refund / Privacy / About / Contact) ---- */
+      /* ---- Info pages (footer: Support / Track / Refund / Privacy / About / Owner / Contact) ---- */
       function storeWaNumber() { return (typeof WA_NUMBER !== "undefined" && WA_NUMBER) ? WA_NUMBER : "919366077306"; }
       function infoPageData(key) {
         var waBtn = '<p><a class="btn btn-accent" data-info-wa href="https://wa.me/919366077306" target="_blank" rel="noopener">Chat on WhatsApp</a></p>';
@@ -5511,12 +5512,16 @@
           '<p>Top-ups cover Mobile Legends, BGMI and other popular titles, with packs for many regions.</p>' +
           '<p>We are an independent store and are not affiliated with Moonton or any game publisher.</p>' +
           '<p>Questions? Our support team is on WhatsApp — see the <a href="#info-contact">Contact us</a> page.</p>' };
+        if (key === "owner") return { title: "About owner", sub: "Who runs Avardo Official.", html:
+          '<p><b>Avardo Official</b> is owned and run by an independent game top-up seller.</p>' +
+          '<p>The owner manages the store day to day — the packs and prices, deliveries, and support replies on WhatsApp.</p>' +
+          '<p>Questions for the owner? Message us on WhatsApp — see the <a href="#info-contact">Contact us</a> page.</p>' };
         if (key === "contact") return { title: "Contact us", sub: "The fastest way to reach us is WhatsApp.", html:
           '<p>Message us on WhatsApp for orders, delivery, refunds and anything else. If your question is about an order, include your order code and the game ID you entered.</p>' + waBtn +
           '<h3>Before you message</h3><p>For order status, check the <a href="#info-track">Track a top-up</a> page first. For delivery and payment questions, the <a href="#faq" data-info-faq>FAQ section</a> may already have the answer.</p>' };
         return null;
       }
-      var INFO_KEYS = ["support", "track", "refund", "privacy", "about", "contact"];
+      var INFO_KEYS = ["support", "track", "refund", "privacy", "about", "owner", "contact"];
       function bindInfoPage(key) {
         Array.prototype.forEach.call(document.querySelectorAll("#infoBody [data-info-wa]"), function (a) { a.href = "https://wa.me/" + storeWaNumber(); a.target = "_blank"; a.rel = "noopener"; });
         Array.prototype.forEach.call(document.querySelectorAll("#infoBody [data-info-faq]"), function (a) { a.addEventListener("click", function () { closeInfoPage(); }); });
