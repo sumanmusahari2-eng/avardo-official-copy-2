@@ -1786,7 +1786,7 @@
     </button>
     <div class="chat-choice" id="chatChoice" hidden>
       <div class="chat-choice-title">How would you like to chat?</div>
-      <a class="chat-choice-btn" id="chatChoiceWa" href="https://wa.me/919366077306" target="_blank" rel="noopener">
+      <a class="chat-choice-btn" id="chatChoiceWa" href="https://wa.me/916001686787" target="_blank" rel="noopener">
         <span class="chat-choice-icon" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5Z"/></svg>
         </span>
@@ -2279,7 +2279,7 @@
          digits only, e.g. "919876543210") and every order button and
          the support link will send orders to that number.
          ============================================================ */
-      var WA_NUMBER = "";
+      var WA_NUMBER = "916001686787";
       /* The note shown under the order summary; editable in the admin. */
       var SUPPORT_NOTE = "Delivery is by game ID only — never share your password. Most packs land within a minute of payment confirmation; support is available 24×7 if anything looks off.";
       /* Reseller info section — editable in Admin → Store Settings. */
@@ -3160,7 +3160,7 @@
         var faqBtn = document.getElementById("faqWaBtn");
         var resellerBtn = document.getElementById("resellerWaBtn");
         var chatChoiceWa = document.getElementById("chatChoiceWa");
-        var waNum = WA_NUMBER || "919366077306";
+        var waNum = WA_NUMBER || "916001686787";
         [waLink, faqBtn, resellerBtn, chatChoiceWa].forEach(function (el) {
           if (!el) return;
           el.href = "https://wa.me/" + waNum;
@@ -4186,7 +4186,7 @@
       function applyStoreData(d) {
         if (!d) return;
         if (d.games && d.games.length) GAMES = d.games;
-        WA_NUMBER = d.waNumber ? String(d.waNumber).replace(/[^0-9]/g, "") : "";
+        WA_NUMBER = d.waNumber ? String(d.waNumber).replace(/[^0-9]/g, "") : "916001686787";
         if (d.supportNote) {
           SUPPORT_NOTE = d.supportNote;
           document.getElementById("sumNote").textContent = SUPPORT_NOTE;
@@ -5480,9 +5480,9 @@
 
       
       /* ---- Info pages (footer: Support / Track / Refund / Privacy / About / Owner / Contact) ---- */
-      function storeWaNumber() { return (typeof WA_NUMBER !== "undefined" && WA_NUMBER) ? WA_NUMBER : "919366077306"; }
+      function storeWaNumber() { return (typeof WA_NUMBER !== "undefined" && WA_NUMBER) ? WA_NUMBER : "916001686787"; }
       function infoPageData(key) {
-        var waBtn = '<p><a class="btn btn-accent" data-info-wa href="https://wa.me/919366077306" target="_blank" rel="noopener">Chat on WhatsApp</a></p>';
+        var waBtn = '<p><a class="btn btn-accent" data-info-wa href="https://wa.me/916001686787" target="_blank" rel="noopener">Chat on WhatsApp</a></p>';
         if (key === "support") return { title: "Support", sub: "Help with orders, delivery and refunds.", html:
           '<p><b>Need help with an order?</b> Message us on WhatsApp with your order code and the game ID you entered, and support will check it.</p>' + waBtn +
           '<h3>Track a top-up</h3><p>Enter your order code on the <a href="#info-track">Track a top-up</a> page to see its status — placed, paid and delivered.</p>' +
